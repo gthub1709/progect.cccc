@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Куб: Взрыв > Сборка > Новый мир</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      height: 100%;
+      background: radial-gradient(#000010, #000);
+      font-family: sans-serif;
+      user-select: none;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .scene {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300px;
+      height: 300px;
+      transform: translate(-50%, -50%);
+      transform-style: preserve-3d;
+      z-index: 1;
+      transition: transform 2s ease;
+    }
+
+    .cube {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+    }
+
+    .face {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: rgba(0, 200, 255, 0.8);
+      border: 2px solid #0ff;
+      box-shadow: 0 0 20px #0ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      color: #fff;
+      transition: transform 1s ease;
+    }
+
+    .front  { transform: translateZ(150px); }
+    .back   { transform: rotateY(180deg) translateZ(150px); }
+    .right  { transform: rotateY(90deg) translateZ(150px); }
+    .left   { transform: rotateY(-90deg) translateZ(150px); }
+    .top    { transform: rotateX(90deg) translateZ(150px); }
+    .bottom { transform: rotateX(-90deg) translateZ(150px); }
+
+    .portal {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translateZ(150px);
+      background: radial-gradient(circle at center, #0ff, #001d3d, black);
+      border-radius: 50%;
+      box-shadow: 0 0 50px 25px rgba(0, 255, 255, 0.5);
+      animation: portalPulse 2s infinite ease-in-out;
+      display: none;
+      z-index: 2;
+    }
+
+    @keyframes portalPulse {
+      0%, 100% { transform: translate(-50%, -50%) translateZ(150px) scale(1); }
+      50% { transform: translate(-50%, -50%) translateZ(150px) scale(1.2); }
+    }
+
+    .flash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      opacity: 0;
+      z-index: 5;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Эффект космоса */
+    .new-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://source.unsplash.com/1600x900/?space') no-repeat center center fixed;
+      background-size: cover;
+      opacity: 0;
+      transition: opacity 3s ease;
+      z-index: 3;
+    }
+
+    /* Звезды */
+    .stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent url('https://source.unsplash.com/1600x900/?stars') repeat;
+      opacity: 0;
+      transition: opacity 3s ease;
+      z-index: 2;
+    }
+
+  </style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="flash" id="flash"></div>
+
+<div class="scene" id="scene">
+  <div class="cube" id="cube">
+    <div class="face front">Front</div>
+    <div class="face back">Back</div>
+    <div class="face right">Right</div>
+    <div class="face left">Left</div>
+    <div class="face top">Top</div>
+    <div class="face bottom">Bottom</div>
+    <div class="portal" id="portal"></div>
+  </div>
+</div>
+
+<div class="stars" id="stars"></div>
+<div class="new-world" id="new-world"></div>
+
+<script>
+  const cube = document.getElementById("cube");
+  const scene = document.getElementById("scene");
+  const portal = document.getElementById("portal");
+  const flash = document.getElementById("flash");
+  const faces = document.querySelectorAll('.face');
+  const body = document.body;
+  const newWorld = document.getElementById("new-world");
+  const stars = document.getElementById("stars");
+
+  // Куб медленно вращается
+  let rotation = { x: 0, y: 0 };
+  function updateCube() {
+    cube.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+  }
+
+  function animateRotation() {
+    rotation.x += 0.1;
+    rotation.y += 0.3;
+    updateCube();
+    requestAnimationFrame(animateRotation);
+  }
+  animateRotation();
+
+  // 5 сек — спокойствие
+  setTimeout(() => {
+    explode();
+
+    // 3 сек — куб в разлёте
+    setTimeout(() => {
+      implode();
+
+      // потом уменьшение
+      setTimeout(() => {
+        shrinkAndGrow();
+      }, 1000);
+
+    }, 3000);
+  }, 5000);
+
+  function explode() {
+    flash.style.opacity = 1;
+    setTimeout(() => flash.style.opacity = 0, 200);
+
+    portal.style.display = 'block';
+    body.style.background = "radial-gradient(#001d3d, #000)";
+
+    faces.forEach(f => {
+      f.style.transition = "transform 1s ease-out";
+      f.style.transform += `
+        translateZ(${(Math.random() - 0.5) * 800}px)
+        rotateX(${Math.random() * 720}deg)
+        rotateY(${Math.random() * 720}deg)
+      `;
+    });
+  }
+
+  function implode() {
+    flash.style.opacity = 1;
+    setTimeout(() => flash.style.opacity = 0, 200);
+
+    portal.style.display = 'none';
+    body.style.background = "radial-gradient(#000010, #000)";
+
+    // Сброс позиций
+    faces.forEach(face => {
+      face.style.transform = ''; // вернуться в исходное положение
+    });
+  }
+
+  function shrinkAndGrow() {
+    // Уменьшаем куб
+    scene.style.transform = "translate(-50%, -50%) scale(0.3)";
+    
+    // Куб снова становится больше
+    setTimeout(() => {
+      scene.style.transform = "translate(-50%, -50%) scale(3)"; // Куб становится большим
+    }, 1000);
+
+    // Затем снова уменьшаем
+    setTimeout(() => {
+      scene.style.transform = "translate(-50%, -50%) scale(0)";
+    }, 2000);
+
+    // Куб исчезает полностью
+    setTimeout(() => {
+      scene.style.display = 'none';
+
+      // Появляется новый мир
+      newWorld.style.opacity = 1;
+      stars.style.opacity = 1;
+
+    }, 3000);
+  }
+
+  // ✨ Частицы
+  const canvas = document.getElementById("bg");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  for (let i = 0; i < 200; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2,
+      dx: (Math.random() - 0.5) * 0.5,
+      dy: (Math.random() - 0.5) * 0.5
+    });
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#0ff";
+    for (let p of particles) {
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+</script>
+
+</body>
+</html>
+
